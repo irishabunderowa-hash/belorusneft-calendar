@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0056b3">
+<title>Календарь ВМУ «Белоруснефть»</title>
+<style>
+:root{--primary:#0056b3;--secondary:#007bff;--accent:#dc3545;--success:#28a745;--warning:#ffc107;--neon:#b026ff;--neon-glow:0 0 8px #b026ff,0 0 16px #b026ff,0 0 24px rgba(176,38,255,.5);--bg:#f0f4f8;--card:#fff;--text:#1a1a2e;--muted:#6c757d;--border:#e2e8f0;--radius:16px;--safe:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;padding-bottom:calc(72px + var(--safe));overflow-x:hidden}
+.app-header{background:linear-gradient(135deg,#0056b3,#007bff);color:#fff;padding:12px 16px 14px;position:sticky;top:0;z-index:100;box-shadow:0 4px 16px rgba(0,0,0,.15)}
+.header-top{display:flex;align-items:center;gap:12px}
+.logo{width:46px;height:46px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #dc3545;flex-shrink:0}
+.logo svg{width:100%;height:100%}
+.header-titles h1{font-size:16px;font-weight:700}
+.header-titles p{font-size:11px;opacity:.9}
+.nav-controls{display:flex;justify-content:space-between;align-items:center;margin-top:12px;background:rgba(255,255,255,.15);border-radius:12px;padding:6px 10px}
+.month-title{font-size:15px;font-weight:600;text-transform:capitalize}
+.nav-btn{background:rgba(255,255,255,.25);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.tab-content{display:none;padding:12px}
+.tab-content.active{display:block}
+.norm-panel{background:linear-gradient(135deg,#fff8e1,#ffecb3);border-radius:var(--radius);padding:12px;margin-bottom:12px;box-shadow:0 4px 16px rgba(0,86,179,.1);border:1px solid #ffe082}
+.norm-title{font-size:13px;font-weight:700;color:#5d4037;text-align:center;margin-bottom:8px}
+.norm-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.norm-item{background:rgba(255,255,255,.7);border-radius:10px;padding:8px 4px;text-align:center}
+.norm-label{font-size:10px;color:#6d4c41;font-weight:600}
+.norm-value{font-size:15px;font-weight:800;color:var(--primary)}
+.norm-diff{font-size:10px;font-weight:700;margin-top:2px}
+.progress-bar{height:4px;background:#e0e0e0;border-radius:2px;margin-top:4px;overflow:hidden}
+.progress-fill{height:100%;border-radius:2px;transition:width .3s}
+.calendar-card{background:var(--card);border-radius:var(--radius);box-shadow:0 4px 16px rgba(0,86,179,.1);overflow:hidden;margin-bottom:12px}
+.calendar-grid{display:grid!important;grid-template-columns:repeat(7,1fr);gap:4px;padding:10px;min-height:280px}
+.day-header{text-align:center;font-size:11px;font-weight:700;color:var(--muted);padding:6px 0}
+.day-cell{aspect-ratio:1;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:#f8fafc;border:1.5px solid transparent;min-height:44px;position:relative;transition:transform .12s}
+.day-cell:active{transform:scale(.94)}
+.day-cell.empty{visibility:hidden;pointer-events:none;background:transparent;border:none}
+.day-number{font-size:14px;font-weight:700;color:var(--text);z-index:2}
+.day-status{font-size:8px;font-weight:700;padding:1px 4px;border-radius:6px;color:#fff;margin-top:1px;max-width:95%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;z-index:2}
+.status-work{background:#e8f5e9;border-color:#81c784}
+.status-work .day-status{background:var(--success)}
+.status-sick{background:#ffebee;border-color:#e57373}
+.status-sick .day-status{background:var(--accent)}
+.status-off{background:#fff8e1;border-color:#ffd54f}
+.status-off .day-status{background:var(--warning);color:#333}
+.day-cell.today{border:2px solid var(--neon)!important;box-shadow:var(--neon-glow);background:linear-gradient(145deg,#f3e5f5,#e1bee7)!important;z-index:5}
+.day-cell.today .day-number{color:#7b1fa2;text-shadow:0 0 6px rgba(176,38,255,.6);font-weight:800}
+.day-cell.today::after{content:'';position:absolute;inset:-2px;border-radius:12px;border:1px solid rgba(176,38,255,.4);pointer-events:none;animation:neonPulse 2s ease-in-out infinite}
+@keyframes neonPulse{0%,100%{box-shadow:0 0 6px #b026ff,0 0 12px rgba(176,38,255,.4)}50%{box-shadow:0 0 12px #b026ff,0 0 24px rgba(176,38,255,.7)}}
+.stats-card{background:var(--card);border-radius:var(--radius);padding:14px;box-shadow:0 4px 16px rgba(0,86,179,.1);margin-bottom:12px}
+.stats-title{font-size:14px;font-weight:700;margin-bottom:10px;text-align:center}
+.stat-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--border);font-size:14px}
+.stat-row:last-child{border-bottom:none}
+.stat-value{font-weight:700;color:var(--primary)}
+.data-controls{display:flex;gap:8px;margin-top:12px}
+.btn-data{flex:1;padding:12px 8px;border:none;border-radius:12px;font-size:13px;font-weight:700;color:#fff;cursor:pointer}
+.btn-save{background:linear-gradient(135deg,#28a745,#20c997)}
+.btn-load{background:linear-gradient(135deg,#0056b3,#007bff)}
+#fileInput{display:none}
+.weather-card{background:linear-gradient(145deg,#1e3a5f,#0d47a1,#1565c0);border-radius:var(--radius);padding:18px;color:#fff;box-shadow:0 8px 30px rgba(13,71,161,.35);margin-bottom:14px;position:relative;overflow:hidden}
+.city-picker{margin-bottom:14px}
+.city-picker-label{font-size:12px;opacity:.9;font-weight:600;margin-bottom:6px}
+.city-current{
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(255,255,255,.2);border-radius:12px;padding:12px 14px;
+  cursor:pointer;border:2px solid rgba(255,255,255,.35);margin-bottom:8px;
+  font-size:15px;font-weight:700;
+}
+.city-current:active{background:rgba(255,255,255,.3)}
+.city-current .arrow{font-size:12px;opacity:.8}
+.city-list{
+  display:none;background:#fff;border-radius:12px;max-height:260px;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  box-shadow:0 8px 24px rgba(0,0,0,.25);
+}
+.city-list.open{display:block}
+.city-group-title{
+  padding:8px 14px;font-size:11px;font-weight:700;color:#0056b3;
+  background:#e3f2fd;position:sticky;top:0;
+}
+.city-item{
+  padding:12px 14px;color:#1a1a2e;font-size:15px;font-weight:600;
+  border-bottom:1px solid #eee;cursor:pointer;
+}
+.city-item:active,.city-item.selected{background:#e8f5e9;color:#2e7d32}
+.city-item:last-child{border-bottom:none}
+.weather-main{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.weather-icon{font-size:52px;line-height:1}
+.weather-temp{font-size:40px;font-weight:800;line-height:1}
+.weather-desc{font-size:13px;opacity:.95;margin-top:2px}
+.weather-feels{font-size:12px;opacity:.8}
+.weather-details{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;background:rgba(255,255,255,.12);border-radius:12px;padding:10px 6px}
+.w-detail{text-align:center}
+.w-detail-label{font-size:10px;opacity:.75}
+.w-detail-value{font-size:13px;font-weight:700;margin-top:2px}
+.weather-forecast{display:flex;gap:8px;margin-top:12px;overflow-x:auto;padding-bottom:4px}
+.forecast-day{flex:0 0 60px;background:rgba(255,255,255,.12);border-radius:12px;padding:8px 4px;text-align:center}
+.forecast-day .f-date{font-size:10px;font-weight:600}
+.forecast-day .f-icon{font-size:20px;margin:3px 0}
+.forecast-day .f-temp{font-size:12px;font-weight:700}
+.weather-link{display:block;text-align:center;margin-top:12px;padding:10px;background:rgba(255,255,255,.2);border-radius:10px;color:#fff;text-decoration:none;font-size:13px;font-weight:600}
+.weather-loading,.weather-error{text-align:center;padding:24px;opacity:.85;font-size:13px}
+.news-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.news-header h2{font-size:16px;font-weight:700}
+.btn-refresh{background:var(--primary);color:#fff;border:none;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:600;cursor:pointer}
+.news-card{background:var(--card);border-radius:var(--radius);padding:14px;margin-bottom:10px;box-shadow:0 4px 12px rgba(0,0,0,.06);border-left:4px solid var(--primary)}
+.news-date{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:4px}
+.news-title{font-size:14px;font-weight:700;line-height:1.35;margin-bottom:4px}
+.news-excerpt{font-size:13px;color:var(--muted);line-height:1.4}
+.news-link{display:inline-block;margin-top:6px;font-size:12px;color:var(--primary);font-weight:600;text-decoration:none}
+.all-news-btn{display:block;width:100%;padding:14px;background:linear-gradient(135deg,#0056b3,#007bff);color:#fff;text-align:center;border-radius:var(--radius);font-weight:700;font-size:14px;text-decoration:none;margin-top:8px}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;display:flex;justify-content:space-around;padding:8px 0 calc(8px + var(--safe));box-shadow:0 -4px 20px rgba(0,0,0,.08);z-index:200;border-top:1px solid var(--border)}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;color:var(--muted);font-size:10px;font-weight:600;cursor:pointer;padding:4px 10px;min-width:60px}
+.nav-item.active{color:var(--primary)}
+.nav-item .nav-icon{font-size:22px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;align-items:flex-end;justify-content:center;backdrop-filter:blur(3px)}
+.modal-overlay.show{display:flex}
+.modal-content{background:var(--card);border-radius:20px 20px 0 0;padding:20px 16px calc(18px + var(--safe));width:100%;max-width:480px;max-height:85vh;overflow-y:auto}
+.modal-title{font-size:17px;font-weight:700;color:var(--primary);text-align:center;margin-bottom:14px}
+.form-group{margin-bottom:12px}
+.form-label{display:block;margin-bottom:5px;font-weight:600;font-size:13px}
+.form-select,.form-input{width:100%;padding:12px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;background:#f8fafc}
+.btn-group{display:flex;gap:8px;margin-top:16px}
+.btn{flex:1;padding:12px;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer}
+.btn-save-modal{background:var(--primary);color:#fff}
+.btn-cancel{background:#e9ecef;color:var(--text)}
+.btn-clear{background:var(--accent);color:#fff}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<header class="app-header">
+<div class="header-top">
+<div class="logo"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="48" fill="#28a745" stroke="#fff" stroke-width="2"/><path d="M20 35 L50 75 L80 35 Z" fill="#dc3545" stroke="#fff" stroke-width="2"/><text x="50" y="58" font-family="Arial" font-size="22" font-weight="bold" fill="#fff" text-anchor="middle">ВМУ</text></svg></div>
+<div class="header-titles"><h1>БЕЛОРУСНЕФТЬ</h1><p>Вышкомонтажное управление</p></div>
+</div>
+<div class="nav-controls" id="monthNav">
+<button class="nav-btn" onclick="changeMonth(-1)">‹</button>
+<div class="month-title" id="monthYear">Октябрь 2026</div>
+<button class="nav-btn" onclick="changeMonth(1)">›</button>
+</div>
+</header>
+
+<div id="tab-calendar" class="tab-content active">
+<div class="norm-panel">
+<div class="norm-title">📊 Норма рабочего времени</div>
+<div class="norm-grid">
+<div class="norm-item"><div class="norm-label">Норма</div><div class="norm-value" id="monthNorm">176 ч.</div></div>
+<div class="norm-item"><div class="norm-label">Отработано</div><div class="norm-value" id="actualHours">0 ч.</div></div>
+<div class="norm-item"><div class="norm-label">Разница</div><div class="norm-value" id="hourDifference" style="font-size:14px">0</div><div class="norm-diff" id="differenceText">По норме</div><div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:0%"></div></div></div>
+</div>
+</div>
+<div class="calendar-card"><div class="calendar-grid" id="calendar"></div></div>
+<div class="stats-card">
+<div class="stats-title">Итого за месяц</div>
+<div class="stat-row"><span>💼 Рабочих дней</span><span class="stat-value" id="totalWorkDays">0</span></div>
+<div class="stat-row"><span>🤒 Больничных</span><span class="stat-value" id="totalSick">0</span></div>
+<div class="stat-row"><span>🏖 Выходных / отгулов</span><span class="stat-value" id="totalOffDays">0</span></div>
+<div class="data-controls">
+<button class="btn-data btn-save" onclick="downloadData()">💾 Сохранить</button>
+<button class="btn-data btn-load" onclick="document.getElementById('fileInput').click()">📂 Загрузить</button>
+<input type="file" id="fileInput" accept=".json" onchange="uploadData(this)">
+</div>
+</div>
+</div>
+
+<div id="tab-weather" class="tab-content">
+<div class="weather-card">
+<div class="city-picker">
+  <div class="city-picker-label">📍 Город</div>
+  <div class="city-current" id="cityCurrent" onclick="toggleCityList()">
+    <span id="cityCurrentText">Светлогорск, Гомельская</span>
+    <span class="arrow">▼</span>
+  </div>
+  <div class="city-list" id="cityList"></div>
+</div>
+<div id="weatherContent"><div class="weather-loading">Выберите регион и город</div></div>
+</div>
+<p style="font-size:12px;color:var(--muted);text-align:center">Данные Open-Meteo · Яндекс.Погода для деталей</p>
+</div>
+
+<div id="tab-news" class="tab-content">
+<div class="news-header"><h2>📰 Новости Белоруснефть</h2><button class="btn-refresh" onclick="loadNews()">Обновить</button></div>
+<div id="newsList"></div>
+<a class="all-news-btn" href="https://www.belorusneft.by/ru/mediacenter/news/" target="_blank" rel="noopener">Все новости на сайте →</a>
+</div>
+
+<div id="tab-info" class="tab-content">
+<div class="stats-card">
+<div class="stats-title">О приложении</div>
+<p style="font-size:13px;line-height:1.5;color:var(--muted);margin-bottom:12px">Производственный календарь ВМУ «Белоруснефть». Учёт рабочего времени, нормы, больничных и отгулов.</p>
+<div class="stat-row"><span>Версия</span><span class="stat-value">2.1</span></div>
+<div class="stat-row"><span>Погода</span><span class="stat-value">Open-Meteo</span></div>
+</div>
+</div>
+
+<nav class="bottom-nav">
+<button class="nav-item active" data-tab="calendar" onclick="switchTab('calendar')"><span class="nav-icon">📅</span><span>Календарь</span></button>
+<button class="nav-item" data-tab="weather" onclick="switchTab('weather')"><span class="nav-icon">🌤</span><span>Погода</span></button>
+<button class="nav-item" data-tab="news" onclick="switchTab('news')"><span class="nav-icon">📰</span><span>Новости</span></button>
+<button class="nav-item" data-tab="info" onclick="switchTab('info')"><span class="nav-icon">ℹ️</span><span>Ещё</span></button>
+</nav>
+
+<div class="modal-overlay" id="editModal">
+<div class="modal-content">
+<div class="modal-title" id="modalTitle">Редактировать день</div>
+<div class="form-group"><label class="form-label">Тип дня</label>
+<select class="form-select" id="dayType" onchange="toggleFields()">
+<option value="">Выберите тип дня</option>
+<option value="work">💼 Работа</option>
+<option value="sick">🤒 Больничный</option>
+<option value="off">🏖 Выходной / Отгул</option>
+</select></div>
+<div id="workFields" class="hidden">
+<div class="form-group"><label class="form-label">Часы работы</label><input type="number" class="form-input" id="hours" min="0" max="24" step="0.5" placeholder="8"></div>
+<div class="form-group"><label class="form-label">Объект</label><input type="text" class="form-input" id="object" placeholder="БУ-1"></div>
+</div>
+<div id="sickFields" class="hidden">
+<div class="form-group"><label class="form-label">Примечание</label><input type="text" class="form-input" id="sickNote" placeholder="Причина..."></div>
+</div>
+<div class="btn-group">
+<button class="btn btn-clear" onclick="clearDay()">Очистить</button>
+<button class="btn btn-cancel" onclick="closeModal()">Отмена</button>
+<button class="btn btn-save-modal" onclick="saveDay()">Сохранить</button>
+</div>
+</div>
+</div>
+
+<script>
+let currentMonth=9,currentYear=2026,selectedDay=null,workData={};
+const monthNorms={0:136,1:160,2:176,3:168,4:159,5:176,6:175,7:168,8:176,9:176,10:167,11:174};
+const regions={"Гомельская":[{name:"Гомель",lat:52.4345,lon:30.9754},{name:"Речица",lat:52.3639,lon:30.3916},{name:"Мозырь",lat:52.0495,lon:29.2456},{name:"Светлогорск",lat:52.6329,lon:29.7389},{name:"Жлобин",lat:52.8926,lon:30.0240},{name:"Калинковичи",lat:52.1323,lon:29.3257},{name:"Октябрьский",lat:52.6467,lon:28.8794}],"Минская":[{name:"Минск",lat:53.9006,lon:27.5590},{name:"Борисов",lat:54.2279,lon:28.5050},{name:"Солигорск",lat:52.7876,lon:27.5357},{name:"Молодечно",lat:54.3167,lon:26.8500}],"Брестская":[{name:"Брест",lat:52.0975,lon:23.6877},{name:"Барановичи",lat:53.1327,lon:26.0139},{name:"Пинск",lat:52.1214,lon:26.0747}],"Витебская":[{name:"Витебск",lat:55.1904,lon:30.2049},{name:"Орша",lat:54.5153,lon:30.4258},{name:"Полоцк",lat:55.4879,lon:28.7856}],"Гродненская":[{name:"Гродно",lat:53.6884,lon:23.8258},{name:"Лида",lat:53.8886,lon:25.2997}],"Могилёвская":[{name:"Могилёв",lat:53.9007,lon:30.3314},{name:"Бобруйск",lat:53.1384,lon:29.2214}]};
+function weatherIcon(c){if(c===0)return'☀️';if(c<=3)return'🌤';if(c<=48)return'🌫';if(c<=67)return'🌧';if(c<=77)return'❄️';if(c<=82)return'🌦';if(c<=86)return'🌨';if(c<=99)return'⛈';return'🌤'}
+function weatherDesc(c){const m={0:'Ясно',1:'Преимущественно ясно',2:'Переменная облачность',3:'Пасмурно',45:'Туман',61:'Небольшой дождь',63:'Дождь',65:'Сильный дождь',71:'Небольшой снег',73:'Снег',80:'Ливень',95:'Гроза'};return m[c]||'Облачно'}
+const defaultNews=[{date:'15.10.2026',title:'Сейсморазведочные работы в Октябрьском районе',excerpt:'С 16 по 31 октября «Белоруснефть» проведёт буровзрывные работы вблизи деревень Гать, Заозерье и Нивное.',url:'https://www.belorusneft.by/ru/mediacenter/news/'},{date:'02.10.2026',title:'Семь новых скважин в сентябре',excerpt:'СУБР закончил 7 новых скважин. ВМУ передало 2 смонтированные буровые установки.',url:'https://www.belorusneft.by/ru/mediacenter/news/'},{date:'01.10.2026',title:'Фестиваль «А ну-ка, бабушки!»',excerpt:'В ДКиТ «Нефтяник» прошёл корпоративный фестиваль женщин компании.',url:'https://www.belorusneft.by/ru/mediacenter/news/'},{date:'Сентябрь 2026',title:'Добыча: курс на 2,1 млн тонн',excerpt:'В 2025 году добыто 2 млн тонн. В 2026 планируется 2,1 млн тонн.',url:'https://www.belorusneft.by/ru/mediacenter/news/'}];
+document.addEventListener('DOMContentLoaded',function(){
+  loadDataFromStorage();
+  renderCalendar();
+  updateStats();
+  updateNormPanel();
+  loadNews();
+  buildCityList();
+  var s=localStorage.getItem('vmuWeatherCity');
+  var region='Гомельская', cityName='Светлогорск';
+  if(s){try{var c=JSON.parse(s);if(c.region&&c.name){region=c.region;cityName=c.name}}catch(e){}}
+  selectCity(region, cityName);
+});
+function switchTab(tab){document.querySelectorAll('.tab-content').forEach(function(el){el.classList.remove('active')});document.querySelectorAll('.nav-item').forEach(function(el){el.classList.remove('active')});document.getElementById('tab-'+tab).classList.add('active');document.querySelector('.nav-item[data-tab="'+tab+'"]').classList.add('active');document.getElementById('monthNav').style.display=tab==='calendar'?'flex':'none'}
+function loadDataFromStorage(){var s=localStorage.getItem('vmuWorkData');if(s){try{workData=JSON.parse(s)}catch(e){}}}
+function saveDataToStorage(){try{localStorage.setItem('vmuWorkData',JSON.stringify(workData))}catch(e){alert('Не удалось сохранить')}}
+function isToday(y,m,d){var n=new Date();return n.getFullYear()===y&&n.getMonth()===m&&n.getDate()===d}
+function renderCalendar(){var grid=document.getElementById('calendar');var monthYear=document.getElementById('monthYear');if(!grid)return;grid.innerHTML='';['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].forEach(function(d){var h=document.createElement('div');h.className='day-header';h.textContent=d;grid.appendChild(h)});var date=new Date(currentYear,currentMonth,1);monthYear.textContent=date.toLocaleDateString('ru-RU',{month:'long',year:'numeric'});var daysInMonth=new Date(currentYear,currentMonth+1,0).getDate();var firstDay=new Date(currentYear,currentMonth,1).getDay();var startOffset=firstDay===0?6:firstDay-1;for(var i=0;i<startOffset;i++){var empty=document.createElement('div');empty.className='day-cell empty';grid.appendChild(empty)}for(var day=1;day<=daysInMonth;day++){var cell=document.createElement('div');cell.className='day-cell';if(isToday(currentYear,currentMonth,day))cell.classList.add('today');var num=document.createElement('div');num.className='day-number';num.textContent=day;var status=document.createElement('div');status.className='day-status';var key=currentYear+'-'+String(currentMonth+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');if(workData[key]){var s=workData[key];cell.classList.add('status-'+s.type);if(s.type==='work')status.textContent=s.hours+'ч'+(s.object?' • '+s.object.substring(0,4):'');else if(s.type==='sick')status.textContent='Бол.';else if(s.type==='off')status.textContent='Отг.'}cell.appendChild(num);cell.appendChild(status);(function(d){cell.onclick=function(){openEditModal(d)}})(day);grid.appendChild(cell)}}
+function changeMonth(delta){currentMonth+=delta;if(currentMonth>11){currentMonth=0;currentYear++}else if(currentMonth<0){currentMonth=11;currentYear--}renderCalendar();updateStats();updateNormPanel()}
+function openEditModal(day){selectedDay=day;var key=currentYear+'-'+String(currentMonth+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');var months=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];document.getElementById('modalTitle').textContent=day+' '+months[currentMonth]+' '+currentYear;if(workData[key]){document.getElementById('dayType').value=workData[key].type;if(workData[key].type==='work'){document.getElementById('hours').value=workData[key].hours||'';document.getElementById('object').value=workData[key].object||''}else if(workData[key].type==='sick'){document.getElementById('sickNote').value=workData[key].note||''}}else{document.getElementById('dayType').value='';document.getElementById('hours').value='';document.getElementById('object').value='';document.getElementById('sickNote').value=''}toggleFields();document.getElementById('editModal').classList.add('show')}
+function toggleFields(){var t=document.getElementById('dayType').value;document.getElementById('workFields').classList.toggle('hidden',t!=='work');document.getElementById('sickFields').classList.toggle('hidden',t!=='sick')}
+function saveDay(){var type=document.getElementById('dayType').value;if(!type){alert('Выберите тип дня');return}var key=currentYear+'-'+String(currentMonth+1).padStart(2,'0')+'-'+String(selectedDay).padStart(2,'0');if(type==='work'){var hours=parseFloat(document.getElementById('hours').value);if(!hours||hours<=0){alert('Укажите часы');return}workData[key]={type:'work',hours:hours,object:document.getElementById('object').value}}else if(type==='sick'){workData[key]={type:'sick',note:document.getElementById('sickNote').value}}else{workData[key]={type:'off'}}closeModal();renderCalendar();updateStats();updateNormPanel();saveDataToStorage()}
+function clearDay(){var key=currentYear+'-'+String(currentMonth+1).padStart(2,'0')+'-'+String(selectedDay).padStart(2,'0');delete workData[key];closeModal();renderCalendar();updateStats();updateNormPanel();saveDataToStorage()}
+function closeModal(){document.getElementById('editModal').classList.remove('show');selectedDay=null}
+function updateStats(){var totalHours=0,sick=0,work=0,off=0;var days=new Date(currentYear,currentMonth+1,0).getDate();for(var d=1;d<=days;d++){var key=currentYear+'-'+String(currentMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');if(workData[key]){if(workData[key].type==='work'){totalHours+=workData[key].hours;work++}else if(workData[key].type==='sick')sick++;else if(workData[key].type==='off')off++}}document.getElementById('actualHours').textContent=totalHours.toFixed(1)+' ч.';document.getElementById('totalSick').textContent=sick;document.getElementById('totalWorkDays').textContent=work;document.getElementById('totalOffDays').textContent=off}
+function updateNormPanel(){var norm=monthNorms[currentMonth]||176;var actual=0;var days=new Date(currentYear,currentMonth+1,0).getDate();for(var d=1;d<=days;d++){var key=currentYear+'-'+String(currentMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');if(workData[key]&&workData[key].type==='work')actual+=workData[key].hours}var diff=actual-norm;var pct=norm>0?(actual/norm*100):0;document.getElementById('monthNorm').textContent=norm+' ч.';document.getElementById('hourDifference').textContent=(diff>0?'+':'')+diff.toFixed(1);var txt=document.getElementById('differenceText');var bar=document.getElementById('progressBar');if(diff>0.1){txt.textContent='Переработка';bar.style.background='#28a745'}else if(diff<-0.1){txt.textContent='Недоработка';bar.style.background='#dc3545'}else{txt.textContent='По норме';bar.style.background='#6c757d'}bar.style.width=Math.min(pct,100)+'%'}
+function downloadData(){var blob=new Blob([JSON.stringify(workData,null,2)],{type:'application/json'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='vmu_backup_'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(url)}
+function uploadData(input){var file=input.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(e){try{var data=JSON.parse(e.target.result);if(confirm('Заменить все данные?')){workData=data;saveDataToStorage();renderCalendar();updateStats();updateNormPanel();alert('Данные загружены!')}}catch(err){alert('Ошибка файла')}input.value=''};reader.readAsText(file)}
+
+function buildCityList(){
+  var list=document.getElementById('cityList');
+  if(!list)return;
+  var html='';
+  Object.keys(regions).forEach(function(reg){
+    html+='<div class="city-group-title">'+reg+' обл.</div>';
+    regions[reg].forEach(function(c){
+      html+='<div class="city-item" data-region="'+reg+'" data-city="'+c.name+'" onclick="onPickCity(this)">'+c.name+'</div>';
+    });
+  });
+  list.innerHTML=html;
+}
+function toggleCityList(){
+  var list=document.getElementById('cityList');
+  list.classList.toggle('open');
+}
+function onPickCity(el){
+  var reg=el.getAttribute('data-region');
+  var name=el.getAttribute('data-city');
+  selectCity(reg, name);
+  document.getElementById('cityList').classList.remove('open');
+}
+function selectCity(region, cityName){
+  var city=null;
+  if(regions[region]){
+    city=regions[region].find(function(c){return c.name===cityName});
+  }
+  if(!city){
+    region='Гомельская'; cityName='Светлогорск';
+    city=regions[region].find(function(c){return c.name===cityName});
+  }
+  document.getElementById('cityCurrentText').textContent=cityName+', '+region;
+  document.querySelectorAll('.city-item').forEach(function(el){
+    el.classList.toggle('selected', el.getAttribute('data-city')===cityName && el.getAttribute('data-region')===region);
+  });
+  localStorage.setItem('vmuWeatherCity', JSON.stringify({region:region, name:cityName}));
+  fetchWeather(city);
+}
+
+async function fetchWeather(city){var box=document.getElementById('weatherContent');box.innerHTML='<div class="weather-loading">Загрузка…</div>';try{var url='https://api.open-meteo.com/v1/forecast?latitude='+city.lat+'&longitude='+city.lon+'&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,surface_pressure&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Europe%2FMinsk&forecast_days=5';var res=await fetch(url);if(!res.ok)throw new Error('net');var data=await res.json();renderWeather(data)}catch(e){box.innerHTML='<div class="weather-error">Нет интернета</div><a class="weather-link" href="https://yandex.ru/pogoda/" target="_blank">Яндекс.Погода →</a>'}}
+function renderWeather(data){var cur=data.current,daily=data.daily,code=cur.weather_code;var fh='';for(var i=0;i<Math.min(5,daily.time.length);i++){var d=new Date(daily.time[i]);var dn=i===0?'Сегодня':d.toLocaleDateString('ru-RU',{weekday:'short'});fh+='<div class="forecast-day"><div class="f-date">'+dn+'</div><div class="f-icon">'+weatherIcon(daily.weather_code[i])+'</div><div class="f-temp">'+Math.round(daily.temperature_2m_max[i])+'°/'+Math.round(daily.temperature_2m_min[i])+'°</div></div>'}document.getElementById('weatherContent').innerHTML='<div class="weather-main"><div class="weather-icon">'+weatherIcon(code)+'</div><div><div class="weather-temp">'+Math.round(cur.temperature_2m)+'°</div><div class="weather-desc">'+weatherDesc(code)+'</div><div class="weather-feels">Ощущается '+Math.round(cur.apparent_temperature)+'°</div></div></div><div class="weather-details"><div class="w-detail"><div class="w-detail-label">Ветер</div><div class="w-detail-value">'+Math.round(cur.wind_speed_10m)+' м/с</div></div><div class="w-detail"><div class="w-detail-label">Влажность</div><div class="w-detail-value">'+cur.relative_humidity_2m+'%</div></div><div class="w-detail"><div class="w-detail-label">Давление</div><div class="w-detail-value">'+Math.round(cur.surface_pressure)+' мм</div></div></div><div class="weather-forecast">'+fh+'</div><a class="weather-link" href="https://yandex.ru/pogoda/" target="_blank">Подробнее на Яндекс.Погоде →</a>'}
+function loadNews(){document.getElementById('newsList').innerHTML=defaultNews.map(function(n){return'<article class="news-card"><div class="news-date">'+n.date+'</div><div class="news-title">'+n.title+'</div><div class="news-excerpt">'+n.excerpt+'</div><a class="news-link" href="'+n.url+'" target="_blank">Читать →</a></article>'}).join('')}
+document.getElementById('editModal').addEventListener('click',function(e){if(e.target.id==='editModal')closeModal()});
+
+document.addEventListener('click',function(e){
+  var picker=document.querySelector('.city-picker');
+  if(picker && !picker.contains(e.target)){
+    var list=document.getElementById('cityList');
+    if(list) list.classList.remove('open');
+  }
+});
+
+</script>
+</body>
+</html>
